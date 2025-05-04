@@ -1,19 +1,14 @@
 require("./utils.js");
 require('dotenv').config();
-
 const Joi = require("joi");
-
 const express = require("express");
 const session = require("express-session");
 const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
 
 const app = express();
-
 const port = process.env.PORT || 3000;
-
 const expireTime = 24 * 60 * 60 * 1000;
-
 const saltRounds = 12;
 
 const mongodb_host = process.env.MONGODB_HOST;
@@ -21,18 +16,12 @@ const mongodb_user = process.env.MONGODB_USER;
 const mongodb_password = process.env.MONGODB_PASSWORD;
 const mongodb_database = process.env.MONGODB_DATABASE;
 const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
-
 const node_session_secret = process.env.NODE_SESSION_SECRET;
 
-
 app.use(express.static(__dirname + "/public"));
-
 app.use(express.urlencoded({extended: false}));
 
-var {
-  database
-} = include('databaseConnection');
-
+var { database } = include('databaseConnection');
 const userCollection = database.db(mongodb_database).collection('users');
 
 var mongoStore = MongoStore.create({
@@ -269,8 +258,8 @@ app.get("/login", (req, res) => {
         <h1>Login</h1>
         ${req.query.error ? `<p class="error">${req.query.error}</p>` : ''}
         <form action='/login' method='post'>
-          <input name='username' type='text' placeholder='Username' value="${req.query.username || ''}">
-          ${req.query.usernameError ? `<p class="field-error">${req.query.usernameError}</p>` : ''}
+          <input name='email' type='email' placeholder='Email' value="${req.query.email || ''}">
+          ${req.query.emailError ? `<p class="field-error">${req.query.emailError}</p>` : ''}
           <input name='password' type='password' placeholder='Password'>
           ${req.query.passwordError ? `<p class="field-error">${req.query.passwordError}</p>` : ''}
           <button>Login</button>
@@ -333,44 +322,40 @@ app.get("/loggedin", (req, res) => {
 });
 
 app.post('/login', async (req,res) => {
-  var username = req.body.username;
+  var email = req.body.email;
   var password = req.body.password;
 
   const errors = {};
-  if (!username) errors.usernameError = 'Username is required';
+  if (!email) errors.emailError = 'Email is required';
   if (!password) errors.passwordError = 'Password is required';
 
   if (Object.keys(errors).length > 0) {
     const queryParams = new URLSearchParams({
       ...errors,
-      username: username || ''
+      email: email || ''
     }).toString();
     return res.redirect(`/login?${queryParams}`);
   }
 
-  try {
-    const schema = Joi.string().max(20).required();
-    await schema.validateAsync(username);
-  } catch (validationError) {
-    return res.redirect(`/login?usernameError=Invalid username format&username=${encodeURIComponent(username)}`);
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.redirect(`/login?emailError=Invalid email format&email=${encodeURIComponent(email)}`);
   }
 
-  const result = await userCollection.find({username: username}).project({username: 1, password: 1, _id: 1}).toArray();
+  const result = await userCollection.find({email: email}).project({username: 1, password: 1, _id: 1}).toArray();
 
   if (result.length != 1) {
-    return res.redirect(`/login?error=User not found&username=${encodeURIComponent(username)}`);
+    return res.redirect(`/login?error=User not found&email=${encodeURIComponent(email)}`);
   }
 
   if (await bcrypt.compare(password, result[0].password)) {
-    console.log("correct password");
     req.session.authenticated = true;
-    req.session.username = username;
+    req.session.username = result[0].username;
     req.session.cookie.maxAge = expireTime;
-
     return res.redirect('/loggedin');
   }
   else {
-    return res.redirect(`/login?error=Incorrect password&username=${encodeURIComponent(username)}`);
+    return res.redirect(`/login?error=Incorrect password&email=${encodeURIComponent(email)}`);
   }
 });
 
@@ -437,7 +422,6 @@ app.post('/submitUser', async (req,res) => {
     email: email,
     password: hashedPassword
   });
-  console.log("Inserted user");
 
   req.session.authenticated = true;
   req.session.username = username;
