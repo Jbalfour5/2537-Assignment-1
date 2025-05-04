@@ -102,9 +102,9 @@ app.get("/members", (req, res) => {
   }
 
   const gifs = [
-    "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExZWFjMTk5YTVnZTgxYXczZTNzc3RrOGRqaTNreWp5cHo1bGptN3BqdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/bnl7xKaEXMLhI475je/giphy.gif",
-    "https://media.giphy.com/media/L31YRVxfExs0U/giphy.gif?cid=ecf05e471kjhus7svfywtrjpof38vv0sl0z50lks6ewhuvlw&ep=v1_gifs_search&rid=giphy.gif&ct=g",
-    "https://media.giphy.com/media/C29crRebTaVi0/giphy.gif?cid=ecf05e471kjhus7svfywtrjpof38vv0sl0z50lks6ewhuvlw&ep=v1_gifs_search&rid=giphy.gif&ct=g"
+    "/gifs/gif1.gif",
+    "/gifs/gif2.webp",
+    "/gifs/gif3.webp"
   ];
   
   const randomGif = gifs[Math.floor(Math.random() * gifs.length)];
